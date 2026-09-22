@@ -1,0 +1,82 @@
+---
+title: "Assignemnt_4_2"
+author: "Derick Silao 300663866"
+date: "2026-09-20"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 2
+# What is the frequency of the series? How can you determine this from the data and/or the time-series plot?
+
+```{r q2}
+library(fpp2)
+library(ggplot2)
+
+data(ausbeer)
+head(ausbeer)
+class(ausbeer)
+
+plot(ausbeer)
+
+```
+
+```{r q21}
+frequency(ausbeer) 
+
+```
+There frequency of the time data is 4 which corresponds to the 4 quarters of a year. Using the frequency function we can observe this division.
+
+
+#Describe the overall behaviour of the series. Is there evidence of a long-term trend?
+
+```{r q22}
+ausbeer_decomp <- decompose(ausbeer, type = "additive")
+plot(ausbeer_decomp$trend, main = "Long-Term Trend", col = "blue", lwd = 2)
+
+```
+We can observe an increase in beer production from the 1950s to the mid 1970s. Then it fluctuates until it stabilizes from the 1990s onward.
+
+
+#Is there evidence of seasonality? If so, describe the seasonal pattern.
+There is strong evidence of seasonality based on the first plot. There are consistent large and downward spikes in short intervals.
+
+#Does the variability appear constant over time? Explain what you see in the plot and whether a transformation might be appropriate.
+The variability seems roughly constant overtime as it follows a seemingly seasonal trend. Thus, a transformation may not be necessary.
+
+#Are there any observations that you would regard as unusual? Identify them and explain why they attract attention? 
+The periods such around 1975, the late 1970s and around 1990 stand out the most. This is because we can observe larger spikes in theses periods compared to periods on the graph.
+
+#Plot the series by season (for example, using a seasonal plot). What does this reveal that is less obvious in the ordinary time-series plot?
+
+```{r q26}
+ggseasonplot(ausbeer) +
+  labs(
+    title = "Quarterly beer production in Australia",
+    x = "Quarter",
+    y = "Production"
+  ) + guides(colour = guide_legend(reverse = TRUE))
+
+```
+This seasonal graph helps us better understand the seasonal pattern of beer production throughout the years. There is a general decrease between the first and second quarter, as well as an increase between the third and fourth quarter of the year.
+
+
+#Plot the seasonal subseries. Which quarters have the highest and lowest typical values? Is the seasonal pattern stable over time?
+
+```{r q27}
+ggsubseriesplot(ausbeer) +
+  ylab("production") +
+  ggtitle("Seasonal subseries plot: beer production")
+```
+Based on the seasonal subseries plots, the fourth quarter has the highest typical values while the 2nd has the lowest. As time progresses, the general seasonal pattern is mostly consistent with a decrease in the second quarter and an increase going towards the fourth quarter.
+
+#Would you detrend or transform the series before modelling it? Give a visual argument for your answer. Do not fit a model.
+
+```{r q28}
+autoplot(ausbeer)
+
+```
+While the seasonal pattern is generally consistent across the years, the variance within the seasons changes wildly after the upwards trend of the 1970s period. Thus, transforming and detrending the data will provide better fits for the models.
