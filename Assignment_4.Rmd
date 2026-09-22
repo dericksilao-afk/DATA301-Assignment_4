@@ -1,0 +1,136 @@
+---
+title: "DATA301 Assignment4"
+author: "Derick Silao 300663866"
+date: "2026-09-17"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+#There are several ways of computing order statistics, e.g., the quartiles that you need for 𝜆^IQR(X). Read and summarise the analysis of alternatives made by Wicklin (2017). This article gives you a link to the article that sparked the discussion (Hyndman & Fan, 1996), and we strongly recommend you also read it. Which type of order statistics would you use and why? Which is the default type of order statistics your version of R/Python uses?
+
+Wicklin’s article, discusses 9 different statistical programs (that come from Hydman & Fan (1996)) that produces different values from quartiles and percentiles. This comes from the lack of a single universally agreed way to estimate a population quantile from a finite sample data.
+
+The nine methods can fall into two groups. Types 1–3 are discontinuous methods. They select observed order statistics, sometimes averaging adjacent observations. While types 4–9 are continuous methods. They use linear interpolation between adjacent order statistics. Small samples are where the methods results differ the most, especially when there are large gaps between adjacent observations. On the other hand, the different methods generally give very similar results with larger samples.
+
+The order statistics Type 8 estimator is the best type in this situation as it produces median-unbiased sample quantiles. The estimate from Type 8 has equal possibilities to be above or below the true population quantile value. Since the exponential distribution we're using in this case is most likely non-linear and is highly skewed, it is heavily affected by small-sample bias. Type 8 in particular retains its median-unbiased characteristics regardless of the underlying distribution's shape. Thus, a median-unbiased estimator like the Type 8 ensures that the estimates do not systematically overestimate or underestimate the width of 𝜆^IQR(X).
+
+R and python use the Type 7 estimator by default. Type 7 is a continuous, piecewise-linear interpolation method using the formula pk = (k-1)/(n-1).
+
+#[You suspect that̂ 𝜆IQR is biased, so derive and implement a first-order bootstrap bias corrected estimator based on̂ 𝜆IQR. Denote it̃ 𝜆. You may fix the number of bootstrap replications in 𝐵 = 200 for every input sample.
+
+```{r q1a}
+set.seed(123, kind = "Mersenne-Twister")
+
+x <- rexp(50, rate = 1)
+
+lambda_ml <- function(x) {
+  
+  n <- length(x)
+  
+  lambda_hat <- 1 / (sum(x) / n)
+  
+  return(lambda_hat)
+}
+
+lambda_iqr <- function(x) {
+  q <- quantile(x, probs = c(0.25, 0.75), type = 8)
+  log(3) / (q[2] - q[1])
+}
+
+lambda_bc <- function(x, B = 200) {
+
+  n <- length(x)
+  lambda_hat <- lambda_iqr(x)
+
+  lambda_boot <- numeric(B)
+
+  for (b in 1:B) {
+    x_boot <- sample(x, size = n, replace = TRUE)
+
+    q <- quantile(
+      x_boot,
+      probs = c(0.25, 0.75),
+      type = 8
+    )
+
+    iqr <- q[2] - q[1]
+
+    if (iqr == 0) {
+      lambda_boot[b] <- NA
+    } else {
+      lambda_boot[b] <- log(3) / iqr
+    }
+  }
+
+  bootstrap_mean <- mean(lambda_boot, na.rm = TRUE)
+  lambda_tilde <- 2 * lambda_hat - bootstrap_mean
+
+  return(lambda_tilde)
+}
+
+lambda_ml(x)
+lambda_iqr(x)
+lambda_bc(x)
+```
+
+#[20%] Make a Monte Carlo experiment comparing these three estimators. Use as parameter space Λ × 𝑁 , where 𝜆 ∈ Λ = {.1, 1, 10} and 𝑛 ∈ 𝑁 = {5, 30, 100}. Use the mean square error as the sole metric for your analysis. Report your results. Justify your choice(s) of the number of replications for each 𝜆 and each 𝑛. You may want to check the book by Robert & Casella (2009); it is available in our library.
+
+```{r q1b}
+set.seed(123, kind = "Mersenne-Twister")
+
+lambda_values <- c(0.1, 1, 10)
+n_values <- c(5, 30, 100)
+
+M <- 1000
+
+results <- data.frame()
+
+for (lambda in lambda_values) {
+
+  for (n in n_values) {
+
+    squared_error_ml <- numeric(M)
+    squared_error_iqr <- numeric(M)
+    squared_error_bc <- numeric(M)
+
+    for (r in 1:M) {
+
+      # Generate sample from Exp(lambda)
+      x <- rexp(n, rate = lambda)
+
+      # Calculate the three estimators
+      est_ml <- lambda_ml(x)
+      est_iqr <- lambda_iqr(x)
+      est_bc <- lambda_bc(x, B = 200)
+
+      # Squared errors
+      squared_error_ml[r] <- (est_ml - lambda)^2
+      squared_error_iqr[r] <- (est_iqr - lambda)^2
+      squared_error_bc[r] <- (est_bc - lambda)^2
+    }
+
+    mse_ml <- mean(squared_error_ml)
+    mse_iqr <- mean(squared_error_iqr)
+    mse_bc <- mean(squared_error_bc)
+
+    results <- rbind(
+      results,
+      data.frame(
+        lambda = lambda,
+        n = n,
+        MSE_ML = mse_ml,
+        MSE_IQR = mse_iqr,
+        MSE_BC = mse_bc
+      )
+    )
+  }
+}
+
+print(results)
+```
+
+MSE decreased substantially with increasing sample size for all estimators. The maximum likelihood estimator consistently produced the lowest MSE. The IQR estimator had larger MSE, while the bootstrap bias correction did not generally improve MSE. Although the correction is intended to reduce bias, the additional variability introduced by estimating the bias can increase the overall MSE. This effect was particularly severe for n=5, where repeated observations in bootstrap samples can result in very small or zero bootstrap IQRs values which leads to extreme estimates. Thus, in terms of MSE, the simulations show that bias correction alone does not necessarily improve estimator performance for these particular values of lambda and n.
