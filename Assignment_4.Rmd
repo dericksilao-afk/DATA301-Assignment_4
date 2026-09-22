@@ -77,7 +77,7 @@ lambda_iqr(x)
 lambda_bc(x)
 ```
 
-#[20%] Make a Monte Carlo experiment comparing these three estimators. Use as parameter space Λ × 𝑁 , where 𝜆 ∈ Λ = {.1, 1, 10} and 𝑛 ∈ 𝑁 = {5, 30, 100}. Use the mean square error as the sole metric for your analysis. Report your results. Justify your choice(s) of the number of replications for each 𝜆 and each 𝑛. You may want to check the book by Robert & Casella (2009); it is available in our library.
+#Make a Monte Carlo experiment comparing these three estimators. Use as parameter space Λ × 𝑁 , where 𝜆 ∈ Λ = {.1, 1, 10} and 𝑛 ∈ 𝑁 = {5, 30, 100}. Use the mean square error as the sole metric for your analysis. Report your results. Justify your choice(s) of the number of replications for each 𝜆 and each 𝑛. You may want to check the book by Robert & Casella (2009); it is available in our library.
 
 ```{r q1b}
 set.seed(123, kind = "Mersenne-Twister")
